@@ -46,17 +46,6 @@ class Model(object):
 
         self.build_text(is_train=is_train)
 
-    def get_feed_dict(self, batch_chunk, step=None, is_training=None):
-        fd = {
-            self.img: batch_chunk['img'],  # [B, h, w, c]
-            self.q: batch_chunk['q'],  # [B, n]
-            self.a: batch_chunk['a'],  # [B, m]
-        }
-        if is_training is not None:
-            fd[self.is_training] = is_training
-
-        return fd
-
     def build_text(self, is_train=True):
 
         def g_theta(o_i, o_j, q, scope='g_theta', reuse=True):
