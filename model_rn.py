@@ -11,8 +11,6 @@ except:
 
 from ops import conv2d, fc
 
-from vqa_util import question2str, answer2str
-
 
 class Model(object):
 
