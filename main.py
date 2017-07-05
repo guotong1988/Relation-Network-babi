@@ -15,7 +15,7 @@ parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--model', type=str, default='rn', choices=['rn', 'baseline'])
 parser.add_argument('--prefix', type=str, default='default')
 parser.add_argument('--checkpoint', type=str, default=None)
-parser.add_argument('--dataset_path', type=str, default='Sort-of-CLEVR_default')
+
 parser.add_argument('--learning_rate', type=float, default=1e-3)
 parser.add_argument('--lr_weight_decay', action='store_true', default=False)
 config = parser.parse_args()
