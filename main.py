@@ -15,7 +15,8 @@ parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--model', type=str, default='rn', choices=['rn', 'baseline'])
 parser.add_argument('--prefix', type=str, default='default')
 parser.add_argument('--checkpoint', type=str, default=None)
-parser.add_argument('--learning_rate', type=float, default=2.5e-4)
+parser.add_argument('--dataset_path', type=str, default='Sort-of-CLEVR_default')
+parser.add_argument('--learning_rate', type=float, default=1e-3)
 parser.add_argument('--lr_weight_decay', action='store_true', default=False)
 config = parser.parse_args()
 
@@ -26,7 +27,7 @@ tf.flags.DEFINE_integer("evaluation_interval", 10, "Evaluate and print results e
 tf.flags.DEFINE_integer("hops", 3, "Number of hops in the Memory Network.")
 tf.flags.DEFINE_integer("epochs", 99999, "Number of epochs to train for.")
 tf.flags.DEFINE_integer("embedding_size", 20, "Embedding size for embedding matrices.")
-tf.flags.DEFINE_integer("memory_size", 50, "Maximum size of memory.")
+tf.flags.DEFINE_integer("memory_size", 999, "Maximum size of memory.")
 tf.flags.DEFINE_integer("task_id", 1, "bAbI task id, 1 <= id <= 20")
 tf.flags.DEFINE_integer("random_state", None, "Random state.")
 tf.flags.DEFINE_string("data_dir", "/home/gt/Relation-Network-Tensorflow/tasks_1-20_v1-2/en-10k/", "Directory containing bAbI tasks")
@@ -48,8 +49,8 @@ query_size = max(map(len, (q for _, q, _ in data)))
 memory_size = min(FLAGS.memory_size, max_story_size)
 
 # Add time words/indexes
-for i in range(memory_size):
-    word_idx['time{}'.format(i+1)] = 'time{}'.format(i+1)
+# for i in range(memory_size):
+#     word_idx['time{}'.format(i+1)] = 'time{}'.format(i+1)
 
 vocab_size = len(word_idx) + 1 # +1 for nil word
 sentence_size = max(query_size, sentence_size) # for the position
@@ -71,7 +72,7 @@ n_val = valS.shape[0]
 n_test = testS.shape[0]
 
 tf.set_random_seed(FLAGS.random_state)
-batch_size = 64
+batch_size = 32
 
 batches = zip(range(0, n_train-batch_size, batch_size), range(batch_size, n_train, batch_size))
 batches = [(start, end) for start, end in batches]
@@ -83,12 +84,22 @@ batches_test = zip(range(0, n_test-batch_size, batch_size), range(batch_size, n_
 batches_test = [(start, end) for start, end in batches_test]
 
 with tf.Session() as sess:
-  model = Model(vocab_size,16,batch_size,sentence_size,memory_size)
+  model = Model(vocab_size,64,batch_size,sentence_size,memory_size)
   global_step = tf.contrib.framework.get_or_create_global_step(graph=None)
+
+  learning_rate = tf.train.exponential_decay(
+      config.learning_rate,
+      global_step=global_step,
+      decay_steps=200000,
+      decay_rate=0.5,
+      staircase=True,
+      name='decaying_learning_rate'
+  )
+
   optimizer = tf.contrib.layers.optimize_loss(
       loss=model.loss,
       global_step=global_step,
-      learning_rate=config.learning_rate,
+      learning_rate=learning_rate,
       optimizer=tf.train.AdamOptimizer,
       clip_gradients=20.0,
       name='optimizer_loss'
@@ -113,7 +124,7 @@ with tf.Session() as sess:
                                         })
           total_cost += cost_t
       print(total_cost,accuracy_print)
-      if t % 100 == 1:
+      if t % 10 == 1:
           for start, end in batches_val:
               s = valS[start:end]
               q = valQ[start:end]
