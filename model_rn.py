@@ -78,7 +78,7 @@ class Model(object):
             embedded_char = tf.nn.embedding_lookup(W, self.q)
 
         with tf.variable_scope("rnn_q"):
-            cell = tf.nn.rnn_cell.LSTMCell(
+            cell = tf.contrib.rnn.LSTMCell(
                 10,
                 forget_bias=2.0,
                 use_peepholes=True,
@@ -104,7 +104,7 @@ class Model(object):
                 self.embedded_chars.append(embedded_char)
 
             with tf.variable_scope("rnn"+str(i)):
-                cell = tf.nn.rnn_cell.LSTMCell(
+                cell = tf.contrib.rnn.LSTMCell(
                     32,
                     forget_bias=2.0,
                     use_peepholes=True,
