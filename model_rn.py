@@ -44,6 +44,17 @@ class Model(object):
 
         self.build_text(is_train=is_train)
 
+    def get_feed_dict(self, batch_chunk, step=None, is_training=None):
+        fd = {
+            self.img: batch_chunk['img'],  # [B, h, w, c]
+            self.q: batch_chunk['q'],  # [B, n]
+            self.a: batch_chunk['a'],  # [B, m]
+        }
+        if is_training is not None:
+            fd[self.is_training] = is_training
+
+        return fd
+
     def build_text(self, is_train=True):
 
         def g_theta(o_i, o_j, q, scope='g_theta', reuse=True):
@@ -78,8 +89,8 @@ class Model(object):
             embedded_char = tf.nn.embedding_lookup(W, self.q)
 
         with tf.variable_scope("rnn_q"):
-            cell = tf.contrib.rnn.LSTMCell(
-                10,
+            cell = tf.nn.rnn_cell.LSTMCell(
+                64,
                 forget_bias=2.0,
                 use_peepholes=True,
                 state_is_tuple=True)
@@ -104,8 +115,8 @@ class Model(object):
                 self.embedded_chars.append(embedded_char)
 
             with tf.variable_scope("rnn"+str(i)):
-                cell = tf.contrib.rnn.LSTMCell(
-                    32,
+                cell = tf.nn.rnn_cell.LSTMCell(
+                    64,
                     forget_bias=2.0,
                     use_peepholes=True,
                     state_is_tuple=True)
